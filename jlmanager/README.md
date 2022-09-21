@@ -2,19 +2,43 @@
 
 JupyterLab Workspace를 관리하는 도구
 
-## 설치방법
+## 실행방법
 
-`jlmanager` 파일을 적절한 위치에 잘 두고 실행하면 됩니다.
+아래 세 가지 방법 중 아무거나 선택해서 실행하면 됩니다.
 
 ### jlmanager.py
 
-`jlmanager`는 `jlmanager.py` 파일을 `pyinstaller`를 이용해 하나의 실행파일로 빌드한 것입니다. 원한다면 `jlmanager.py` 파일을 직접 실행할 수도 있습니다. `jlmanager.py` 실행을 위해서는 다음 패키지가 설치되어 있어야 합니다.
+`jlmanager.py`를 직접 실행합니다.
+
+```bash
+python jlmanager.py <command> [options]
+```
+
+`jlmanager.py` 실행을 위해서는 다음 패키지가 설치되어 있어야 합니다.
 
 - python 3.8 이상
 - jupyter-server
 - pyyaml
 - tabulate
 - hk_utils
+
+### 다중 파일
+
+`jlmanager.tar.gz` 파일은 `pyinstaller`를 이용해 `jlmanager.py`를 패키징한 후, 디렉토리를 압축한 것입니다. 압축을 풀면 추가적인 패키지를 설치할 필요 없이 바로 실행 가능합니다.
+
+```bash
+tar -xvf jlmanager.tar.gz  # 압축 풀기
+cd jlmanager
+./jlmanager <command> [options]
+```
+
+### 단일 파일
+
+`jlmanager` 파일은 `pyinstaller`를 이용해 `jlmanager.py`를 단일 파일로 패키징한 것입니다. 추가적인 패키지를 설치할 필요 없이 바로 실행 가능합니다. 단, 세 가지 방법 중 가장 느립니다.
+
+```bash
+./jlmanager <command> [options]
+```
 
 ## 사용법
 
