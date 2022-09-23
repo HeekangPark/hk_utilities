@@ -1,0 +1,35 @@
+#!bash
+#/etc/bash_completion.d/jlmanager
+
+_jlmanager()
+{
+
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [ "$prev" == "jlmanager" ]; then
+        opt="list create delete start stop run kill"
+        COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+    fi
+
+    if [ "$prev" == "start" ] || [ "$prev" == "run" ]; then
+        not_running_envs=$(/home/heekang/scripts/jlmanager list --not-running 2>/dev/null)
+        COMPREPLY=( $( compgen -W "${not_running_envs}" -- "$cur" ) )
+    fi
+
+    if [ "$prev" == "stop" ] || [ "$prev" == "kill" ]; then
+        running_envs=$(/home/heekang/scripts/jlmanager list --running 2>/dev/null)
+        COMPREPLY=( $( compgen -W "${running_envs}" -- "$cur" ) )
+    fi
+
+    if [ "$prev" == "delete" ]; then
+        envs=$(/home/heekang/scripts/jlmanager list 2>/dev/null)
+        COMPREPLY=( $( compgen -W "${envs}" -- "$cur" ) )
+    fi
+
+    return 0
+}
+
+complete -F _jlmanager jlmanager

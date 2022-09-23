@@ -114,6 +114,7 @@ def parse_arg(argv):
     # list
     parser_list = subparsers.add_parser("list", help="List workspaces")
     parser_list.add_argument("-r", "--running", action="store_true", help="Only list running workspaces")
+    parser_list.add_argument("-R", "--not-running", action="store_true", help="Only list not running workspaces")
     parser_list.add_argument("-v", "--verbose", action="store_true", help="Show details")
     parser_list.set_defaults(func=do_list)
 
@@ -191,6 +192,7 @@ def do_list(args):
     update_workspaces()
 
     is_running = args.running
+    is_not_running = args.not_running
     is_verbose = args.verbose
 
     if is_running:
@@ -211,18 +213,43 @@ def do_list(args):
             print(tabulate(rows, headers=["Workspace", "Directory", "Python", "PID", "URL"]))
         else:
             print('\n'.join([workspace_name for workspace_name, workspace_info in workspaces.items() if workspace_info["running"]]))
-    else:
+    elif is_not_running:
         if is_verbose:
-            print(tabulate(
-                [[
+            rows = []
+            for workspace_name, workspace_info in workspaces.items():
+                if workspace_info["running"] is not None:
+                    continue
+                rows.append([
                     workspace_name,
                     workspace_info["directory"],
                     workspace_info["python"],
-                    "*" if workspace_info["running"] else ""
-                ] for workspace_name, workspace_info in workspaces.items()],
-                headers=["Workspace", "directory", "python", "running"],
-                colalign=("left", "left", "right", "center")
-            ))
+                ])
+
+            print(tabulate(rows, headers=["Workspace", "Directory", "Python"]))
+        else:
+            print('\n'.join([workspace_name for workspace_name, workspace_info in workspaces.items() if not workspace_info["running"]]))
+    else:
+        if is_verbose:
+            rows = [[
+                workspace_name,
+                workspace_info["directory"],
+                workspace_info["python"],
+                "*" if workspace_info["running"] else ""
+            ] for workspace_name, workspace_info in workspaces.items()]
+            
+            # Note
+            #  colalign has bug : when rows are empty, it generates error
+            if len(rows) == 0:
+                print(tabulate(
+                    rows,
+                    headers=["Workspace", "directory", "python", "running"]
+                ))
+            else:
+                print(tabulate(
+                    rows,
+                    headers=["Workspace", "directory", "python", "running"],
+                    colalign=("left", "left", "right", "center")
+                ))
         else:
             print('\n'.join(workspaces.keys()))
 

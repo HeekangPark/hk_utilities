@@ -4,7 +4,18 @@ JupyterLab Workspace를 관리하는 도구
 
 ## 실행방법
 
-아래 세 가지 방법 중 아무거나 선택해서 실행하면 됩니다.
+아래 네 가지 방법 중 아무거나 선택해서 실행하면 됩니다.
+
+### 설치 스크립트 이용 (install.sh) [Most Recommended]
+
+아래 "다중 파일" 설치를 자동적으로 수행합니다.
+
+구체적으로, 다음 동작을 수행합니다.
+
+1. 홈 디렉토리에서 `jlmanager.tar.gz` 파일의 압축을 해제하여 `~/jlmanager` 디렉토리를 생성합니다.
+2. `~/scripts` 디렉토리를 생성하고, `PATH` 환경변수에 추가합니다.
+3. `~/scripts` 디렉토리에 `~/jlmanager/jlmanager` 파일의 심볼릭 링크를 생성합니다.
+4. `/etc/bash_completion.d` 디렉토리에 자동완성을 위한 스크립트를 등록합니다(sudo 필요).
 
 ### jlmanager.py
 
@@ -22,7 +33,7 @@ python jlmanager.py <command> [options]
 - tabulate
 - hk_utils
 
-### 다중 파일
+### 다중 파일 [Most Recommended]
 
 `jlmanager.tar.gz` 파일은 `pyinstaller`를 이용해 `jlmanager.py`를 패키징한 후, 디렉토리를 압축한 것입니다. 압축을 풀면 추가적인 패키지를 설치할 필요 없이 바로 실행 가능합니다.
 
