@@ -18,30 +18,11 @@ Bash 쉘 자동완성 기능의 경우,
 
 ## 설치 방법
 
-### 전체 설치
+`install.sh` 스크립트를 실행하면 된다. (실행 시 sudo 권한을 요구한다.)
 
-1. 본 repository를 clone한다.
-    ```
-    git clone https://github.com/HeekangPark/assh
-    ```
-
-2. `install.sh` 스크립트를 실행한다. 
-    ```
-    ./install.sh
-    ```
-    이 스크립트는 다음 동작을 수행한다.
-    1. `~/scripts` 디렉토리를 만들고, 본 repository의 `assh` 파일을 복사한 후, 실행 권한을 부여한다.
-    2. `~/.bashrc` 파일에 `export PATH="$HOME/scripts:$PATH"` 행을 추가한다.
-    3. `/etc/bash_completion.d` 디렉토리에 본 repository의 `assh.bash.autocomplete` 파일을 `assh`라는 이름으로 복사한다(관리자 권한 필요).
-
-3. 사용중인 쉘을 종료했다가 다시 로그인한다. 다음 명령어를 입력해 `assh`가 정상적으로 설치되었는지 확인한다. `assh` 버전이 출력되면 정상적으로 설치가 완료된 것이다.
-    ```
-    assh --version
-    ```
-
-### 최소 설치
-
-만약 자동완성 기능을 사용하고 싶지 않다면 본 repository의 `assh.py` 파일만 적당히 복사해 사용하면 된다.
+```bash
+$ ./install.sh
+```
 
 ## 사용 방법
 

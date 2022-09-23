@@ -1,0 +1,23 @@
+#!/bin/bash
+
+_assh()
+{
+  local cur prev
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  if [ "$prev" == "assh" ]; then
+    opt="connect list update-ssh"
+    COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+  fi
+
+  if [ "$prev" == "connect" ]; then
+    hosts=$(/home/heekang/scripts/assh list 2>/dev/null)
+    COMPREPLY=( $( compgen -W "${hosts}" -- "$cur" ) )
+  fi
+
+  return 0
+}
+
+complete -F _assh assh
