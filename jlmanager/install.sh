@@ -2,15 +2,17 @@
 
 cd $HOME
 
-rm -rf jlmanager jlmanager.tar.gz
+rm -rf ~/jlmanager jlmanager.tar.gz
 wget https://github.com/HeekangPark/utilities/raw/master/jlmanager/jlmanager.tar.gz
 tar -zxf jlmanager.tar.gz
 rm jlmanager.tar.gz
 
 mkdir -p scripts
+rm -f ~/scripts/jlmanager
 ln -s ~/jlmanager/jlmanager ~/scripts/jlmanager
-echo "export PATH=$PATH:$HOME/scripts" >> ~/.bashrc
+echo 'export PATH=$PATH:$HOME/scripts' >> ~/.bashrc
 
 wget https://github.com/HeekangPark/utilities/raw/master/jlmanager/jlmanager.bash_autocompletion
+sudo chown root:root jlmanager.bash_autocompletion
 sudo mv jlmanager.bash_autocompletion /etc/bash_completion.d/jlmanager
 
