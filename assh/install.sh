@@ -12,4 +12,6 @@ rm -f ~/scripts/assh
 ln -s ~/assh/assh ~/scripts/assh
 echo 'export PATH=$PATH:$HOME/scripts' >> ~/.bashrc
 
+wget https://github.com/HeekangPark/utilities/raw/master/assh/assh.bash_autocompletion
+sudo chown root:root assh.bash_autocompletion
 sudo mv assh.bash_autocompletion /etc/bash_completion.d/assh
