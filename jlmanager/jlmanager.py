@@ -9,6 +9,8 @@ import yaml
 from tabulate import tabulate
 from hk_utils import print
 
+__version__ = "1.2.0"
+
 config = None
 workspaces = {}
 unavailable_workspace_names = set()
@@ -22,7 +24,7 @@ def load_config(config_path="~/.jlmanager/config.yaml"):
         "workspace_path": "~/workspace",
         "default_python": "3.10",
         "default_ip": "127.0.0.1",
-        "default_port": "8888",
+        "default_port": "7000",
         "operation_waiting_timeout": 10,
     }
 
@@ -65,8 +67,8 @@ def update_workspaces():
     for workspace in workspace_names:
         workspace_dir = os.path.join(config["workspace_path"], workspace)
 
-        # check if .jlab exist in the workspace directory
-        if not os.path.exists(os.path.join(workspace_dir, ".jlab")):
+        # check if workspace directory exists
+        if not os.path.exists(workspace_dir):
             continue
         
         python_path = os.path.join(config["conda_path"], "envs", workspace, "bin", "python")
@@ -86,6 +88,16 @@ def update_workspaces():
 
     return workspaces
 
+def stop_workspace(workspace_name):
+    for running_server in workspaces[workspace_name]["running"]:
+        subprocess.run(
+            f"kill {running_server['pid']}",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=True
+        )
+        print.success(f"Workspace \"{workspace_name}\" stopped({running_server['pid']}).")
+
 def delete_workspace(workspace_name):
     # remove workspace directory
     shutil.rmtree(workspaces[workspace_name]["directory"], ignore_errors=True)
@@ -99,6 +111,13 @@ def delete_workspace(workspace_name):
     )
     
     print.success(f"Workspace \"{workspace_name}\" deleted.")
+
+def better_tabulate(rows, headers, colalign, **kwargs):
+    # Note : colalign has bug; when rows are empty, it generates error
+    if len(rows) == 0:
+        return tabulate(rows, headers=headers, **kwargs)
+    else:
+        return tabulate(rows, headers=headers, colalign=colalign, disable_numparse=True, **kwargs)
 
 def parse_arg(argv):
     parser = argparse.ArgumentParser(description="Jupyterlab Workspace Manager")
@@ -121,6 +140,8 @@ def parse_arg(argv):
     # start
     parser_start = subparsers.add_parser("start", aliases=["run"], help="Start a workspace")
     parser_start.add_argument("workspace_name", help="Name of the workspace to start")
+    parser_start.add_argument("-i", "--ip", default=config["default_ip"], help=f"IP address to bind. Default: {config['default_ip']}")
+    parser_start.add_argument("-p", "--port", default=config["default_port"], help=f"Port to bind. Default: {config['default_port']}")
     parser_start.set_defaults(func=do_start)
 
     # stop
@@ -132,6 +153,9 @@ def parse_arg(argv):
     parser_delete = subparsers.add_parser("delete", help="Delete a workspace")
     parser_delete.add_argument("workspace_name", help="Name of the workspace to delete")
     parser_delete.set_defaults(func=do_delete)
+
+    # version
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
 
     if len(argv) == 1:  # if no arguments are provided, show help
         parser.print_help(sys.stderr)
@@ -168,6 +192,7 @@ def do_create(args):
     # create workspace directory
     os.makedirs(workspace_path, exist_ok=True)
 
+    """
     # create jupyterlab config file
     with open(f"{workspace_path}/.jlab_config.py", "w") as f:
         f.write(f"c.ServerApp.ip = '{config['default_ip']}'\n")
@@ -185,6 +210,7 @@ def do_create(args):
 
     # make jupyterlab execution file executable
     os.chmod(f"{os.path.join(workspace_path, '.jlab')}", 0o755)
+    """
 
     print.success(f"Workspace \"{workspace_name}\" created.")
 
@@ -210,7 +236,11 @@ def do_list(args):
                         running_server_info["url"]
                     ])
 
-            print(tabulate(rows, headers=["Workspace", "Directory", "Python", "PID", "URL"]))
+            print(better_tabulate(
+                rows,
+                headers=["Workspace", "Directory", "Python", "PID", "URL"],
+                colalign=("left", "left", "right", "right", "left")
+            ))
         else:
             print('\n'.join([workspace_name for workspace_name, workspace_info in workspaces.items() if workspace_info["running"]]))
     elif is_not_running:
@@ -225,7 +255,11 @@ def do_list(args):
                     workspace_info["python"],
                 ])
 
-            print(tabulate(rows, headers=["Workspace", "Directory", "Python"]))
+            print(better_tabulate(
+                rows,
+                headers=["Workspace", "Directory", "Python"],
+                colalign=("left", "left", "right")
+            ))
         else:
             print('\n'.join([workspace_name for workspace_name, workspace_info in workspaces.items() if not workspace_info["running"]]))
     else:
@@ -237,19 +271,11 @@ def do_list(args):
                 "*" if workspace_info["running"] else ""
             ] for workspace_name, workspace_info in workspaces.items()]
             
-            # Note
-            #  colalign has bug : when rows are empty, it generates error
-            if len(rows) == 0:
-                print(tabulate(
-                    rows,
-                    headers=["Workspace", "directory", "python", "running"]
-                ))
-            else:
-                print(tabulate(
-                    rows,
-                    headers=["Workspace", "directory", "python", "running"],
-                    colalign=("left", "left", "right", "center")
-                ))
+            print(better_tabulate(
+                rows,
+                headers=["Workspace", "Directory", "Python", "Running"],
+                colalign=("left", "left", "right", "center")
+            ))
         else:
             print('\n'.join(workspaces.keys()))
 
@@ -257,6 +283,8 @@ def do_start(args):
     update_workspaces()
 
     workspace_name = args.workspace_name
+    ip = args.ip
+    port = args.port
 
     if workspace_name not in workspaces:
         print.error(f"Workspace \"{workspace_name}\" does not exist. Abort.")
@@ -271,10 +299,15 @@ def do_start(args):
 
     with open(os.path.join(workspaces[workspace_name]["directory"], ".jlab.log"), "w") as f:
         subprocess.Popen(
-            ['nohup', f"{os.path.join(config['workspace_path'], workspace_name, '.jlab')}"],
+            [f'eval "$(conda shell.bash hook)";\
+               conda activate {workspace_name};\
+               cd {workspaces[workspace_name]["directory"]};\
+               nohup jupyter lab --ip={ip} --port={port} --no-browser'
+            ],
             stdout=f,
             stderr=f,
-            preexec_fn=os.setpgrp()
+            preexec_fn=os.setpgrp(),
+            shell=True
         )
 
     waiting_start_time = time.time()
@@ -301,14 +334,7 @@ def do_stop(args):
         print.warning(f"Workspace \"{workspace_name}\" is not running.")
         return
     
-    for running_server in workspaces[workspace_name]["running"]:
-        subprocess.run(
-            f"kill {running_server['pid']}",
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-            shell=True
-        )
-        print.success(f"Workspace \"{workspace_name}\" stopped({running_server['pid']}).")
+    stop_workspace(workspace_name)
 
 def do_delete(args):
     update_workspaces()
@@ -321,7 +347,7 @@ def do_delete(args):
 
     if workspaces[workspace_name]["running"]:
         print.warning(f"Workspace \"{workspace_name}\" is running. Stopping...")
-        do_stop(args)
+        stop_workspace(workspace_name)
     
     delete_workspace(workspace_name)
 

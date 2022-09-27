@@ -2,24 +2,32 @@
 
 JupyterLab Workspace를 관리하는 도구
 
-## 실행방법
+버전 1.2.0
 
-아래 네 가지 방법 중 아무거나 선택해서 실행하면 됩니다.
+## 설치 및 실행 방법
 
-### 설치 스크립트 이용 (install.sh) [Most Recommended]
+`install.sh`를 실행합니다.
 
-아래 "다중 파일" 설치를 자동적으로 수행합니다.
+```bash
+$ install.sh
+```
 
-구체적으로, 다음 동작을 수행합니다.
+`install.sh`는 다음 동작을 수행합니다.
 
 1. 홈 디렉토리에서 `jlmanager.tar.gz` 파일의 압축을 해제하여 `~/jlmanager` 디렉토리를 생성합니다.
 2. `~/scripts` 디렉토리를 생성하고, `PATH` 환경변수에 추가합니다.
 3. `~/scripts` 디렉토리에 `~/jlmanager/jlmanager` 파일의 심볼릭 링크를 생성합니다.
 4. `/etc/bash_completion.d` 디렉토리에 자동완성을 위한 스크립트를 등록합니다(sudo 필요).
 
+설치가 완료되었으면 터미널을 닫았다 다시 엽니다. 이제 `jlmanager`를 사용할 수 있습니다.
+
+```bash
+$ jlmanager
+```
+
 ### jlmanager.py
 
-`jlmanager.py`를 직접 실행합니다.
+원한다면 `jlmanager.py`를 직접 실행할 수도 있습니다.
 
 ```bash
 python jlmanager.py <command> [options]
@@ -32,24 +40,6 @@ python jlmanager.py <command> [options]
 - pyyaml
 - tabulate
 - hk_utils
-
-### 다중 파일 [Most Recommended]
-
-`jlmanager.tar.gz` 파일은 `pyinstaller`를 이용해 `jlmanager.py`를 패키징한 후, 디렉토리를 압축한 것입니다. 압축을 풀면 추가적인 패키지를 설치할 필요 없이 바로 실행 가능합니다.
-
-```bash
-tar -xvf jlmanager.tar.gz  # 압축 풀기
-cd jlmanager
-./jlmanager <command> [options]
-```
-
-### 단일 파일
-
-`jlmanager` 파일은 `pyinstaller`를 이용해 `jlmanager.py`를 단일 파일로 패키징한 것입니다. 추가적인 패키지를 설치할 필요 없이 바로 실행 가능합니다. 단, 세 가지 방법 중 가장 느립니다.
-
-```bash
-./jlmanager <command> [options]
-```
 
 ## 사용법
 
@@ -104,10 +94,12 @@ jlmanager list --running [-v]
 ### jupyterlab 실행
 
 ```bash
-jlmanager run <workspace_name>
+jlmanager run <workspace_name> [-i <ip>] [-p <port>]
 ```
 
 - `workspace_name` : 실행할 workspace 이름
+- `-i` : jupyterlab 서버의 ip 주소
+- `-p` : jupyterlab 서버의 port 번호
 
 workspace를 실행합니다.
 
@@ -132,4 +124,10 @@ jlmanager <command> --help
 
 도움말을 확인합니다.
 
+### 버전 확인
 
+```bash
+jlmanager --version
+```
+
+버전을 확인합니다.
