@@ -6,6 +6,8 @@ import argparse
 import subprocess
 from hk_utils import print
 
+__version__ = "1.2.1"
+
 class ConfigParser:
     def __init__(self):
         self._default = { "User": getpass.getuser(), "Port": '22' }
@@ -98,9 +100,6 @@ config_parser = ConfigParser()
 def parse_arg(argv):
     parser = argparse.ArgumentParser(description="assh : Advanced SSH")
 
-    # version
-    parser.add_argument("-v", "--version", action="version", version="assh 1.1.0")
-
     subparsers = parser.add_subparsers()
 
     # list
@@ -120,6 +119,9 @@ def parse_arg(argv):
     parser_update_ssh_config_file.add_argument("-f", "--config-file", help="specify the config file. If not specified, ~/.ssh/assh.config is used.", default="~/.ssh/assh.config")
     parser_update_ssh_config_file.add_argument("--overwrite", help="overwrite the SSH config file if it exists. The existed file will be backuped to ~/.ssh/config.old", action="store_true")
     parser_update_ssh_config_file.set_defaults(func=do_update_ssh)
+
+    # version
+    parser.add_argument("-v", "--version", action="version", version=f"%(prog)s {__version__}")
 
     if len(argv) == 1:  # if no arguments are provided, show help
         parser.print_help(sys.stderr)
