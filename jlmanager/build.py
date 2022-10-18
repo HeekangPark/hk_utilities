@@ -47,17 +47,19 @@ def build(version):
 def update_scripts():
     with open(f"update-{app_name}.sh", "w") as f:
         f.write(f"""#!/bin/bash
+# updater version : 1.0.0
+
 cd $HOME
 
 # download app
 rm -rf {app_name} {app_name}-*.tar.gz
 wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
 tar -zxf {app_name}-latest.tar.gz
-mv {app_name}-latest {app_name}
 rm -rf {app_name}-latest.tar.gz""")
     
     with open(f"install-{app_name}.sh", "w") as f:
         f.write(f"""#!/bin/bash
+# installer version : 1.0.0
 
 cd $HOME
 
@@ -65,7 +67,6 @@ cd $HOME
 rm -rf {app_name} {app_name}-*.tar.gz
 wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
 tar -zxf {app_name}-latest.tar.gz
-mv {app_name}-latest {app_name}
 rm -rf {app_name}-latest.tar.gz
 
 # install app (add to ~/scripts)
