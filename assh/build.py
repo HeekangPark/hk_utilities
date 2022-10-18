@@ -93,6 +93,12 @@ def commit(version):
         shell=True
     )
 
+    subprocess.run(
+        f"git push origin master",
+        stdout=subprocess.DEVNULL,
+        shell=True
+    )
+
 if __name__ == "__main__":
     version = get_version()
     build(version)
