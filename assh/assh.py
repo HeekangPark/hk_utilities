@@ -6,7 +6,7 @@ import argparse
 import subprocess
 from hk_utils import print
 
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 class ConfigParser:
     def __init__(self):

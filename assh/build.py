@@ -42,43 +42,51 @@ def build(version):
     )
     shutil.copy(f"{app_name}-{version}.tar.gz", f"{app_name}-latest.tar.gz")
     cleanup()
+    print.success(f"build complete : {app_name}-{version}")
 
-def update_scripts(version):
+def update_scripts():
     with open(f"update-{app_name}.sh", "w") as f:
         f.write(f"""#!/bin/bash
 cd $HOME
 
+# download app
 rm -rf {app_name} {app_name}-*.tar.gz
 wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
 tar -zxf {app_name}-latest.tar.gz
 mv {app_name}-latest {app_name}
-rm -rf {app_name}-latest.tar.gz
-        """)
+rm -rf {app_name}-latest.tar.gz""")
     
     with open(f"install-{app_name}.sh", "w") as f:
         f.write(f"""#!/bin/bash
 cd $HOME
 
+# download app
 rm -rf {app_name} {app_name}-*.tar.gz
 wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
 tar -zxf {app_name}-latest.tar.gz
 mv {app_name}-latest {app_name}
 rm -rf {app_name}-latest.tar.gz
 
+# install app (add to ~/scripts)
 mkdir -p scripts
 rm -f ~/scripts/{app_name}
 ln -s $HOME/{app_name}/{app_name} ~/scripts/{app_name}
-grep -qxF 'export PATH=$PATH:$HOME/scripts' ~/.bashrc || echo 'export PATH=$PATH:$HOME/scripts' >> ~/.bashrc
+grep -qxF 'export PATH="$HOME/scripts:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/scripts:$PATH"' >> ~/.bashrc
 source ~/.bashrc
 
+# download updater
 wget https://raw.githubusercontent.com/HeekangPark/utilities/master/{app_name}/update-{app_name}.sh
+
+# install updater (add to ~/scripts) 
 mv update-{app_name}.sh ~/scripts
 chmod +x scripts/update-{app_name}.sh
 
+# download bash autocomplete script
 wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}.bash_autocompletion
+
+# install bash autocomplete script
 sudo chown root:root {app_name}.bash_autocompletion
-sudo mv {app_name}.bash_autocompletion /etc/bash_completion.d/{app_name}
-        """)
+sudo mv {app_name}.bash_autocompletion /etc/bash_completion.d/{app_name}""")
 
 def commit(version):
     subprocess.run(
@@ -99,9 +107,11 @@ def commit(version):
         shell=True
     )
 
+    print.success(f"commit complete : {app_name}-{version}")
+
 if __name__ == "__main__":
     version = get_version()
     build(version)
-    update_scripts(version)
+    update_scripts()
     commit(version)
-    print.success(f"build & commit complete : {app_name}-{version}")
+    
