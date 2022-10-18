@@ -18,10 +18,32 @@ Bash 쉘 자동완성 기능의 경우,
 
 ## 설치 방법
 
-`install.sh` 스크립트를 실행하면 된다. (실행 시 sudo 권한을 요구한다.)
+`install-assh.sh` 스크립트를 실행하면 된다. (실행 시 sudo 권한을 요구한다.)
 
 ```bash
-$ ./install.sh
+$ ./install-assh.sh
+```
+
+`install-assh.sh`는 다음 동작을 수행한다.
+
+1. 홈 디렉토리에서 `assh-latest.tar.gz` 파일의 압축을 해제하여 `~/assh` 디렉토리를 생성한다.
+2. `~/scripts` 디렉토리를 생성하고, `PATH` 환경변수에 추가한다.
+3. `~/scripts` 디렉토리에 `~/assh/assh` 파일의 심볼릭 링크를 생성한다.
+4. `/etc/bash_completion.d` 디렉토리에 자동완성을 위한 스크립트를 등록한다(sudo 필요).
+5. `~/scripts` 디렉토리에 `jlmanager` 업데이트를 위한 스크립트(`update-assh.sh`)를 생성한다.
+
+이제 `assh`를 사용할 수 있습니다.
+
+```bash
+$ assh
+```
+
+### update-assh.sh
+
+`update-assh.sh`를 실행하면 `assh`를 업데이트할 수 있다. 단 업데이트가 정상적으로 수행되기 위해선 `assh`가 `install-assh.sh`로 설치되었어야 한다.
+
+```bash
+$ update-jlmanager.sh
 ```
 
 ## 사용 방법
