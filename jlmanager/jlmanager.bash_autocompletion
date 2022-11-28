@@ -3,14 +3,13 @@
 
 _jlmanager()
 {
-
     local cur prev
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
 
     if [ "$prev" == "jlmanager" ]; then
-        opt="list create delete start stop run kill"
+        opt="list create delete start stop run kill terminate --version --help"
         COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
     fi
 
@@ -19,7 +18,7 @@ _jlmanager()
         COMPREPLY=( $( compgen -W "${not_running_envs}" -- "$cur" ) )
     fi
 
-    if [ "$prev" == "stop" ] || [ "$prev" == "kill" ]; then
+    if [ "$prev" == "stop" ] || [ "$prev" == "kill" ] || [ "$prev" == "terminate" ]; then
         running_envs=$(/home/heekang/scripts/jlmanager list --running 2>/dev/null)
         COMPREPLY=( $( compgen -W "${running_envs}" -- "$cur" ) )
     fi
@@ -27,6 +26,30 @@ _jlmanager()
     if [ "$prev" == "delete" ]; then
         envs=$(/home/heekang/scripts/jlmanager list 2>/dev/null)
         COMPREPLY=( $( compgen -W "${envs}" -- "$cur" ) )
+    fi
+
+    if [ "${COMP_POINT}" -ge 2 ]; then
+        subcmd="${COMP_WORDS[1]}"
+
+        if [ "$subcmd" == "create" ]; then
+            opt="-f --force --python="
+            COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+        fi
+
+        if [ "$subcmd" == "list" ]; then
+            opt="-r --running -R --not-running -v --verbose"
+            COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+        fi
+
+        if [ "$subcmd" == "start" ] || [ "$subcmd" == "run" ]; then
+            opt="-i --ip= -p --port="
+            COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+        fi
+
+        if [ "$subcmd" == "delete" ] || [ "$subcmd" == "remove" ]; then
+            opt="--delete-workspace-dir"
+            COMPREPLY=( $( compgen -W "$opt" -- "$cur" ) )
+        fi
     fi
 
     return 0

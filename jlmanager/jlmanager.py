@@ -9,7 +9,7 @@ import yaml
 from tabulate import tabulate
 from hk_utils import print
 
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 
 config = None
 workspaces = {}
@@ -24,7 +24,7 @@ def load_config(config_path="~/.jlmanager/config.yaml"):
         "workspace_path": "~/workspace",
         "default_python": "3.10",
         "default_ip": "127.0.0.1",
-        "default_port": "7000",
+        "default_port": "8888",
         "operation_waiting_timeout": 10,
     }
 
@@ -44,8 +44,16 @@ def update_workspaces():
     workspaces.clear()
     unavailable_workspace_names.clear()
     
-    workspace_names_in_conda_dir = set(os.listdir(f"{config['conda_path']}/envs"))
-    workspace_names_in_workspace_dir = set(os.listdir(f"{config['workspace_path']}"))
+    if not (os.path.isdir(config["workspace_path"]) and os.path.isdir(os.path.join(config["conda_path"], "envs"))):
+        print.warning(f"Cannot find conda path({config['conda_path']}). Is conda installed properly?")
+        workspace_names_in_conda_dir = set()
+    else:
+        workspace_names_in_conda_dir = set(os.listdir(os.path.join(config['conda_path'], "envs")))
+    
+    if not os.path.isdir(config["workspace_path"]):
+        workspace_names_in_workspace_dir = set()
+    else:
+        workspace_names_in_workspace_dir = set(os.listdir(f"{config['workspace_path']}"))
 
     workspace_names = workspace_names_in_conda_dir & workspace_names_in_workspace_dir
     unavailable_workspace_names.update(workspace_names_in_conda_dir | workspace_names_in_workspace_dir)
@@ -98,10 +106,7 @@ def stop_workspace(workspace_name):
         )
         print.success(f"Workspace \"{workspace_name}\" stopped({running_server['pid']}).")
 
-def delete_workspace(workspace_name):
-    # remove workspace directory
-    shutil.rmtree(workspaces[workspace_name]["directory"], ignore_errors=True)
-
+def delete_workspace(workspace_name, delete_workspace_dir=False):
     # remove conda environment
     subprocess.run(
         f"{os.path.join(config['conda_path'], 'condabin', 'conda')} env remove -n {workspace_name}",
@@ -109,7 +114,12 @@ def delete_workspace(workspace_name):
         stderr=subprocess.DEVNULL,
         shell=True,
     )
-    
+
+    # remove workspace directory
+    if delete_workspace_dir:
+        shutil.rmtree(workspaces[workspace_name]["directory"], ignore_errors=True)
+        print.success(f"Workspace \"{workspace_name}\" directory deleted.")
+
     print.success(f"Workspace \"{workspace_name}\" deleted.")
 
 def better_tabulate(rows, headers, colalign, **kwargs):
@@ -145,13 +155,14 @@ def parse_arg(argv):
     parser_start.set_defaults(func=do_start)
 
     # stop
-    parser_stop = subparsers.add_parser("stop", aliases=["kill"], help="Stop a workspace")
+    parser_stop = subparsers.add_parser("stop", aliases=["kill", "terminate"], help="Stop a workspace")
     parser_stop.add_argument("workspace_name", help="Name of the workspace to stop")
     parser_stop.set_defaults(func=do_stop)
 
     # delete
-    parser_delete = subparsers.add_parser("delete", help="Delete a workspace")
+    parser_delete = subparsers.add_parser("delete", aliases=["remove"], help="Delete a workspace")
     parser_delete.add_argument("workspace_name", help="Name of the workspace to delete")
+    parser_delete.add_argument("--delete-workspace-dir", action="store_true", help="Delete workspace directory")
     parser_delete.set_defaults(func=do_delete)
 
     # version
@@ -181,36 +192,27 @@ def do_create(args):
             print.error(f"Workspace name \"{workspace_name}\" already occupied. Abort.")
             return
     
-    # create conda environment
-    subprocess.run(
-        f"{os.path.join(config['conda_path'], 'condabin', 'conda')} create -y -n {workspace_name} python={python_version} jupyterlab",
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-        shell=True,
-    )
+    try:
+        # create conda environment
+        subprocess.run(
+            f"{os.path.join(config['conda_path'], 'condabin', 'conda')} create -y -n {workspace_name} python={python_version} jupyterlab",
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            shell=True,
+        )
 
-    # create workspace directory
-    os.makedirs(workspace_path, exist_ok=True)
+        # create workspace directory
+        os.makedirs(workspace_path, exist_ok=True)
+    except KeyboardInterrupt:
+        # remove conda environment
+        shutil.rmtree(os.path.join(config["conda_path"], "envs", workspace_name), ignore_errors=True)
 
-    """
-    # create jupyterlab config file
-    with open(f"{workspace_path}/.jlab_config.py", "w") as f:
-        f.write(f"c.ServerApp.ip = '{config['default_ip']}'\n")
-        f.write(f"c.ServerApp.port = {config['default_port']}\n")
-        f.write(f"c.ServerApp.open_browser = False\n")
-    
-    # create jupyterlab execution file
-    with open(f"{workspace_path}/.jlab", "w") as f: 
-        f.write('eval "$(conda shell.bash hook)"\n')
-        f.write(f'conda activate {workspace_name}\n')
-        f.write('\n')
-        f.write('cd "$(dirname "$0")"\n')
-        f.write('\n')
-        f.write('jupyter lab --config=".jlab_config.py"\n')
+        # remove workspace directory
+        shutil.rmtree(workspace_path, ignore_errors=True)
 
-    # make jupyterlab execution file executable
-    os.chmod(f"{os.path.join(workspace_path, '.jlab')}", 0o755)
-    """
+        print.error("Job interrupted. Abort.")
+        sys.exit(1)
+        return
 
     print.success(f"Workspace \"{workspace_name}\" created.")
 
@@ -349,7 +351,7 @@ def do_delete(args):
         print.warning(f"Workspace \"{workspace_name}\" is running. Stopping...")
         stop_workspace(workspace_name)
     
-    delete_workspace(workspace_name)
+    delete_workspace(workspace_name, delete_workspace_dir=args.delete_workspace_dir)
 
 if __name__ == '__main__':
     load_config()
