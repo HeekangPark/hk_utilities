@@ -4,9 +4,9 @@ import re
 import sys
 import argparse
 import subprocess
-from hk_utils import print
+from hk_libs import print
 
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 
 class ConfigParser:
     def __init__(self):

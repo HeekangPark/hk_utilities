@@ -1,8 +1,9 @@
 import os
 import glob
+import json
 import shutil
 import subprocess
-from hk_utils import print
+from hk_libs import print
 
 app_name = "assh"
 
@@ -41,54 +42,15 @@ def build(version):
         cwd="dist"
     )
     shutil.copy(f"{app_name}-{version}.tar.gz", f"{app_name}-latest.tar.gz")
+
+    with open("../versions.json", "r") as f:
+        version_json = json.load(f)
+    version_json[app_name] = version
+    with open("../versions.json", "w") as f:
+        json.dump(version_json, f, indent=4)
+
     cleanup()
     print.success(f"build complete : {app_name}-{version}")
-
-def update_scripts():
-    with open(f"update-{app_name}.sh", "w") as f:
-        f.write(f"""#!/bin/bash
-# updater version : 1.0.0
-
-cd $HOME
-
-# download app
-rm -rf {app_name} {app_name}-*.tar.gz
-wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
-tar -zxf {app_name}-latest.tar.gz
-rm -rf {app_name}-latest.tar.gz""")
-    
-    with open(f"install-{app_name}.sh", "w") as f:
-        f.write(f"""#!/bin/bash
-# installer version : 1.0.0
-
-cd $HOME
-
-# download app
-rm -rf {app_name} {app_name}-*.tar.gz
-wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}-latest.tar.gz
-tar -zxf {app_name}-latest.tar.gz
-rm -rf {app_name}-latest.tar.gz
-
-# install app (add to ~/scripts)
-mkdir -p scripts
-rm -f ~/scripts/{app_name}
-ln -s $HOME/{app_name}/{app_name} ~/scripts/{app_name}
-grep -qxF 'export PATH="$HOME/scripts:$PATH"' ~/.bashrc || echo 'export PATH="$HOME/scripts:$PATH"' >> ~/.bashrc
-source ~/.bashrc
-
-# download updater
-wget https://raw.githubusercontent.com/HeekangPark/utilities/master/{app_name}/update-{app_name}.sh
-
-# install updater (add to ~/scripts) 
-mv update-{app_name}.sh ~/scripts
-chmod +x scripts/update-{app_name}.sh
-
-# download bash autocomplete script
-wget https://github.com/HeekangPark/utilities/raw/master/{app_name}/{app_name}.bash_autocompletion
-
-# install bash autocomplete script
-sudo chown root:root {app_name}.bash_autocompletion
-sudo mv {app_name}.bash_autocompletion /etc/bash_completion.d/{app_name}""")
 
 def commit(version):
     subprocess.run(
@@ -114,6 +76,5 @@ def commit(version):
 if __name__ == "__main__":
     version = get_version()
     build(version)
-    update_scripts()
     commit(version)
     
