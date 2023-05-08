@@ -38,7 +38,7 @@ python jlmanager.py <command> [options]
 - jupyter-server
 - pyyaml
 - tabulate
-- hk_utils
+- hk_libs
 
 ### update-jlmanager.sh
 
